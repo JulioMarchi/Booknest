@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ebookFormSchema } from "./schemas";
 import { businessRules } from "@/lib/constants";
 import type { TablesUpdate } from "@/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type EbookActionState = {
   error?: string;
@@ -55,7 +56,7 @@ function parseEbookFormData(formData: FormData) {
  * só mudar o preço, por exemplo, sem reenviar a capa).
  */
 async function uploadIfProvided(
-  supabase: SupabaseServerClient,
+  _supabase: SupabaseServerClient,
   bucket: "covers" | "ebooks",
   ebookId: string,
   entry: FormDataEntryValue | null,
@@ -71,7 +72,8 @@ async function uploadIfProvided(
   const ext = entry.name.split(".").pop()?.toLowerCase() || (bucket === "covers" ? "jpg" : "pdf");
   const path = `${ebookId}/${bucket === "covers" ? "capa" : "livro"}.${ext}`;
 
-  const { error } = await supabase.storage.from(bucket).upload(path, entry, {
+  const admin = createAdminClient();
+  const { error } = await admin.storage.from(bucket).upload(path, entry, {
     upsert: true,
     contentType: entry.type || undefined,
   });
